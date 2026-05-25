@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  # ─── MySQL ──────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: parqueadero_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: parqueadero123
+      MYSQL_DATABASE:      parqueadero_unimonserrate
+      MYSQL_USER:          parkuser
+      MYSQL_PASSWORD:      parkpass123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Backend FastAPI ─────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parqueadero_api
+    restart: always
+    environment:
+      DB_HOST:        db
+      DB_USER:        parkuser
+      DB_PASSWORD:    parkpass123
+      DB_NAME:        parqueadero_unimonserrate
+      JWT_SECRET:     parqueadero-jwt-secret-2026
+      ADMIN_EMAIL:    admin@parqueadero.edu.co
+      ADMIN_PASSWORD: admin123
+      # ── SMTP Gmail (opcional) ──────────────────────────────────────────
+      # Para activar el envío de emails con facturas PDF:
+      #   1. Activa verificación en 2 pasos en tu cuenta Google
+      #   2. Ve a myaccount.google.com → Seguridad → Contraseñas de aplicaciones
+      #   3. Genera una App Password de 16 caracteres
+      #   4. Rellena los valores de abajo con tu cuenta y esa contraseña
+      # Si se dejan vacíos, el sistema funciona igual sin enviar emails.
+      SMTP_HOST:      "smtp.gmail.com"
+      SMTP_PORT:      "587"
+      SMTP_USER:      ""
+      SMTP_PASSWORD:  ""
+      MAIL_FROM:      ""
+      MAIL_FROM_NAME: "Parqueadero Unimonserrate"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  # ─── Frontend React ──────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: parqueadero_web
+    restart: always
+    environment:
+      # VITE_API_URL vacío → el proxy de Vite reenvía al backend internamente
+      VITE_API_URL:  ""
+      BACKEND_URL:   "http://backend:8000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules   # preserva node_modules instalados en la imagen
+
+volumes:
+  db_data:

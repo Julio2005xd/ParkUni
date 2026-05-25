@@ -1,0 +1,76 @@
+# ── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Variables de entorno / secretos ─────────────────
+backend/.env
+.env
+.env.local
+.env.*.local
+*.secret
+
+# ── Node.js ──────────────────────────────────────────
+frontend/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+frontend/dist/
+frontend/build/
+
+# ── IDEs y editores ───────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ── Sistema operativo ─────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Docker ────────────────────────────────────────────
+.docker/
+
+# ── Logs ──────────────────────────────────────────────
+*.log
+logs/
+
+# ── Testing ───────────────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Alembic (migraciones generadas) ───────────────────
+alembic/versions/*.py
+
+# ── Archivos temporales ───────────────────────────────
+*.tmp
+*.bak
+*.orig
+
+# ── Archivos con nombre reservado de Windows (generados por npm) ──
+frontend/nul
