@@ -37,8 +37,8 @@ services:
       ADMIN_PASSWORD: admin123
       SMTP_HOST:      "smtp.gmail.com"
       SMTP_PORT:      "587"
-      SMTP_USER:      "jchernanmon@unimonserrate.edu.co"
-      SMTP_PASSWORD:  "vegm jfhe tkwf qqpj"
+      SMTP_USER:      ""
+      SMTP_PASSWORD:  ""
       MAIL_FROM:      "jchernanmon@unimonserrate.edu.co"
       MAIL_FROM_NAME: "Parqueadero Unimonserrate"
     ports:
