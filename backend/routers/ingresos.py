@@ -1,6 +1,3 @@
-"""
-routers/ingresos.py — Control de ingreso y salida vehicular
-"""
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -28,10 +25,6 @@ def _registrar_auditoria(db: Session, accion: str, registro_id: int, detalle: st
         detalle=detalle
     ))
 
-
-# ──────────────────────────────────────────────────────────────
-#  POST /ingresos/validar-qr  ← flujo usuario registrado
-# ──────────────────────────────────────────────────────────────
 @router.post("/validar-qr")
 def validar_ingreso_qr(datos: dict, db: Session = Depends(get_db)):
     """
@@ -40,7 +33,6 @@ def validar_ingreso_qr(datos: dict, db: Session = Depends(get_db)):
     """
     codigo = datos.get("codigo", "")
 
-    # 1. Buscar QR activo
     qr = db.query(CodigoQR).filter(
         CodigoQR.codigo == codigo,
         CodigoQR.estado == "activo"
@@ -48,7 +40,6 @@ def validar_ingreso_qr(datos: dict, db: Session = Depends(get_db)):
     if not qr:
         raise HTTPException(status_code=401, detail="Código QR inválido o expirado")
 
-    # 2. Verificar mensualidad del usuario
     from datetime import date
     periodo_actual = date.today().strftime("%Y-%m")
     mensualidad = db.query(Mensualidad).filter(
@@ -64,14 +55,12 @@ def validar_ingreso_qr(datos: dict, db: Session = Depends(get_db)):
             "periodo": periodo_actual
         }
 
-    # 3. Obtener vehículo del usuario
     vehiculo = db.query(Vehiculo).join(Persona).join(UsuarioRegistrado).filter(
         UsuarioRegistrado.id == qr.usuario_id
     ).first()
     if not vehiculo:
         raise HTTPException(status_code=404, detail="Usuario no tiene vehículo registrado")
 
-    # 4. Verificar que no tenga ingreso activo
     ingreso_activo = db.query(Ingreso).filter(
         Ingreso.vehiculo_id == vehiculo.id,
         Ingreso.estado == "activo"
@@ -79,7 +68,6 @@ def validar_ingreso_qr(datos: dict, db: Session = Depends(get_db)):
     if ingreso_activo:
         return {"autorizado": False, "motivo": "Vehículo ya se encuentra dentro del parqueadero"}
 
-    # 5. Registrar ingreso
     ingreso = Ingreso(
         vehiculo_id=vehiculo.id,
         tipo_usuario="registrado",
@@ -103,10 +91,6 @@ def validar_ingreso_qr(datos: dict, db: Session = Depends(get_db)):
         "mensaje": "Acceso autorizado ✓"
     }
 
-
-# ──────────────────────────────────────────────────────────────
-#  POST /ingresos/placa  ← detecta placa vía OCR
-# ──────────────────────────────────────────────────────────────
 @router.post("/placa")
 async def ingresar_por_placa(
     imagen: UploadFile = File(...),
@@ -128,7 +112,6 @@ async def ingresar_por_placa(
 
     placa = resultado_ocr["placa_detectada"]
 
-    # Buscar vehículo
     vehiculo = db.query(Vehiculo).filter(Vehiculo.placa == placa).first()
     if not vehiculo:
         return {
@@ -138,7 +121,6 @@ async def ingresar_por_placa(
             "confianza": resultado_ocr["confianza"]
         }
 
-    # Verificar ingreso activo duplicado
     activo = db.query(Ingreso).filter(
         Ingreso.vehiculo_id == vehiculo.id,
         Ingreso.estado == "activo"
@@ -165,10 +147,6 @@ async def ingresar_por_placa(
         "hora_entrada": ingreso.fecha_hora_entrada.isoformat(),
     }
 
-
-# ──────────────────────────────────────────────────────────────
-#  POST /ingresos/salida  ← registra salida y genera cobro
-# ──────────────────────────────────────────────────────────────
 @router.post("/salida")
 def registrar_salida(datos: IngresoSalida, db: Session = Depends(get_db)):
     """Registra la salida del vehículo y calcula el cobro."""
@@ -214,10 +192,6 @@ def registrar_salida(datos: IngresoSalida, db: Session = Depends(get_db)):
         "metodo_pago": datos.metodo_pago
     }
 
-
-# ──────────────────────────────────────────────────────────────
-#  GET /ingresos/activos
-# ──────────────────────────────────────────────────────────────
 @router.get("/activos", response_model=List[dict])
 def listar_activos(db: Session = Depends(get_db)):
     """Lista todos los vehículos actualmente en el parqueadero."""
@@ -241,10 +215,6 @@ def listar_activos(db: Session = Depends(get_db)):
         })
     return resultado
 
-
-# ──────────────────────────────────────────────────────────────
-#  GET /ingresos/ocupacion
-# ──────────────────────────────────────────────────────────────
 @router.get("/ocupacion", response_model=OcupacionOut)
 def ocupacion(db: Session = Depends(get_db)):
     """Retorna la ocupación actual del parqueadero."""
@@ -260,10 +230,6 @@ def ocupacion(db: Session = Depends(get_db)):
         porcentaje=porcentaje
     )
 
-
-# ──────────────────────────────────────────────────────────────
-#  GET /ingresos/historial
-# ──────────────────────────────────────────────────────────────
 @router.get("/historial", response_model=List[dict])
 def historial(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Historial paginado de todos los ingresos."""

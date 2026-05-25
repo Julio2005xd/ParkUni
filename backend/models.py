@@ -1,7 +1,3 @@
-"""
-models.py — Modelos SQLAlchemy
-Sistema Inteligente de Parqueadero Universitario — Unimonserrate
-"""
 from datetime import datetime
 from tz import now_col
 from sqlalchemy import (
@@ -10,11 +6,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from database import Base
-
-
-# ═══════════════════════════════════════════════════
-#  LEGACY MODELS (mantener compatibilidad)
-# ═══════════════════════════════════════════════════
 
 class Persona(Base):
     __tablename__ = "personas"
@@ -141,13 +132,7 @@ class ConfiguracionParqueadero(Base):
     horario_apertura = Column(Time)
     horario_cierre   = Column(Time)
 
-
-# ═══════════════════════════════════════════════════
-#  NUEVOS MODELOS — Sistema v2 con Auth + Billing
-# ═══════════════════════════════════════════════════
-
 class CuentaUsuario(Base):
-    """Cuenta de autenticación: admin o usuario del parqueadero."""
     __tablename__ = "cuentas_usuario"
 
     id            = Column(Integer, primary_key=True, index=True)
@@ -168,7 +153,6 @@ class CuentaUsuario(Base):
 
 
 class VehiculoCuenta(Base):
-    """Vehículo vinculado a una CuentaUsuario."""
     __tablename__ = "vehiculos_cuenta"
 
     id             = Column(Integer, primary_key=True, index=True)
@@ -190,7 +174,6 @@ class VehiculoCuenta(Base):
 
 
 class QRParqueo(Base):
-    """Código QR del parqueadero (visita o mensualidad)."""
     __tablename__ = "qr_parqueo"
 
     id          = Column(Integer, primary_key=True, index=True)
@@ -208,7 +191,6 @@ class QRParqueo(Base):
 
 
 class SesionParqueo(Base):
-    """Sesión de parqueo: entrada + salida + cobro."""
     __tablename__ = "sesiones_parqueo"
 
     id               = Column(Integer, primary_key=True, index=True)
@@ -231,7 +213,6 @@ class SesionParqueo(Base):
 
 
 class MensualidadV2(Base):
-    """Mensualidad creada por admin para una cuenta de usuario."""
     __tablename__ = "mensualidades_v2"
 
     id           = Column(Integer, primary_key=True, index=True)
@@ -253,7 +234,6 @@ class MensualidadV2(Base):
 
 
 class FacturaV2(Base):
-    """Factura de cobro (visita o mensualidad)."""
     __tablename__ = "facturas_v2"
 
     id            = Column(Integer, primary_key=True, index=True)

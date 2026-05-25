@@ -1,11 +1,9 @@
-// src/pages/admin/AdminDashboard.jsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { admin as adminApi, sesiones as sesionesApi } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { C, S } from "../../theme";
 
-/* ── Sidebar ─────────────────────────────────────────────────── */
 function AdminSidebar({ tab, setTab, onLogout, sidebarOpen, setSidebarOpen }) {
   const navigate = useNavigate();
 
@@ -23,14 +21,12 @@ function AdminSidebar({ tab, setTab, onLogout, sidebarOpen, setSidebarOpen }) {
 
   return (
     <>
-      {/* Overlay */}
       <div
         className={`admin-sidebar-overlay${sidebarOpen ? " open" : ""}`}
         onClick={() => setSidebarOpen(false)}
       />
 
       <aside className={`admin-sidebar${sidebarOpen ? " open" : ""}`}>
-        {/* Brand */}
         <div className="admin-sidebar-brand">
           <div className="admin-sidebar-logo">P</div>
           <div>
@@ -39,7 +35,6 @@ function AdminSidebar({ tab, setTab, onLogout, sidebarOpen, setSidebarOpen }) {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="admin-sidebar-nav">
           {navItems.map((item, i) => {
             if (item.section) {
@@ -68,7 +63,6 @@ function AdminSidebar({ tab, setTab, onLogout, sidebarOpen, setSidebarOpen }) {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="admin-sidebar-footer">
           <button className="admin-sidebar-logout" onClick={onLogout}>
             <span>↩</span> Cerrar sesión
@@ -79,7 +73,6 @@ function AdminSidebar({ tab, setTab, onLogout, sidebarOpen, setSidebarOpen }) {
   );
 }
 
-/* ── Stat card ────────────────────────────────────────────────── */
 function StatCard({ label, value, icon, color, note }) {
   const colorMap = { blue: C.primary, green: C.green, yellow: C.accent, red: C.red };
   const col = colorMap[color] || C.primary;
@@ -98,7 +91,6 @@ function StatCard({ label, value, icon, color, note }) {
   );
 }
 
-/* ── Sesiones activas ─────────────────────────────────────────── */
 function SesionesActivas() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -143,7 +135,6 @@ function SesionesActivas() {
   );
 }
 
-/* ── Historial ─────────────────────────────────────────────────── */
 function HistorialAdmin() {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState({});
@@ -222,7 +213,6 @@ function HistorialAdmin() {
   );
 }
 
-/* ── Gestión de cuentas ───────────────────────────────────────── */
 function GestionCuentas() {
   const [cuentas, setCuentas] = useState([]);
   const [form, setForm]       = useState({ nombre: "", correo: "", password: "", documento: "", rol: "usuario" });
@@ -299,7 +289,6 @@ function GestionCuentas() {
         </form>
       )}
 
-      {/* Modal alerta */}
       {alertaFor && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(13,27,53,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
           <form onSubmit={enviarAlerta} style={{ background: "#fff", borderRadius: 16, padding: 28, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
@@ -348,7 +337,6 @@ function GestionCuentas() {
   );
 }
 
-/* ── AdminDashboard ───────────────────────────────────────────── */
 export default function AdminDashboard() {
   const [tab, setTab]       = useState("inicio");
   const [stats, setStats]   = useState(null);
@@ -370,7 +358,6 @@ export default function AdminDashboard() {
       />
 
       <div className="admin-content">
-        {/* Mobile hamburger */}
         <button
           className="admin-hamburger"
           onClick={() => setSidebarOpen(o => !o)}
@@ -382,7 +369,6 @@ export default function AdminDashboard() {
         </button>
 
         <div className="admin-content-inner">
-          {/* Page header */}
           <div style={{ marginBottom: 24 }}>
             <h1 style={{ fontFamily: "'Montserrat',sans-serif", fontWeight: 800, fontSize: "clamp(18px,3vw,24px)", color: C.text, margin: 0 }}>
               {tab === "inicio"    && "Dashboard"}

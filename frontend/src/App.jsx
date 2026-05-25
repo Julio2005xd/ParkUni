@@ -1,4 +1,3 @@
-// src/App.jsx — Enrutamiento principal con React Router DOM
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -14,7 +13,6 @@ import AdminMensualidades from "./pages/admin/AdminMensualidades";
 import AdminReportes      from "./pages/admin/AdminReportes";
 import CamaraPlacas       from "./pages/CamaraPlacas";
 
-// ── Rutas protegidas ──────────────────────────────────────────────
 function PrivateRoute({ children, rol }) {
   const { estaLogueado, user } = useAuth();
   if (!estaLogueado) {
@@ -26,21 +24,17 @@ function PrivateRoute({ children, rol }) {
   return children;
 }
 
-// ── App ───────────────────────────────────────────────────────────
 function AppRoutes() {
   return (
     <Routes>
-      {/* Landing */}
       <Route path="/" element={<Landing />} />
 
-      {/* Usuario */}
       <Route path="/usuario/login"   element={<UserLogin />} />
       <Route path="/usuario/registro" element={<UserRegister />} />
       <Route path="/usuario" element={
         <PrivateRoute rol="usuario"><UserDashboard /></PrivateRoute>
       } />
 
-      {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={
         <PrivateRoute rol="admin"><AdminDashboard /></PrivateRoute>
@@ -52,10 +46,8 @@ function AppRoutes() {
         <PrivateRoute rol="admin"><AdminReportes /></PrivateRoute>
       } />
 
-      {/* Cámara (acceso público) */}
       <Route path="/camara" element={<CamaraPlacas />} />
 
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-  # ─── MySQL ──────────────────────────────────────────────
   db:
     image: mysql:8.0
     container_name: parqueadero_db
@@ -22,7 +21,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # ─── Backend FastAPI ─────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -37,18 +35,11 @@ services:
       JWT_SECRET:     parqueadero-jwt-secret-2026
       ADMIN_EMAIL:    admin@parqueadero.edu.co
       ADMIN_PASSWORD: admin123
-      # ── SMTP Gmail (opcional) ──────────────────────────────────────────
-      # Para activar el envío de emails con facturas PDF:
-      #   1. Activa verificación en 2 pasos en tu cuenta Google
-      #   2. Ve a myaccount.google.com → Seguridad → Contraseñas de aplicaciones
-      #   3. Genera una App Password de 16 caracteres
-      #   4. Rellena los valores de abajo con tu cuenta y esa contraseña
-      # Si se dejan vacíos, el sistema funciona igual sin enviar emails.
       SMTP_HOST:      "smtp.gmail.com"
       SMTP_PORT:      "587"
-      SMTP_USER:      ""
-      SMTP_PASSWORD:  ""
-      MAIL_FROM:      ""
+      SMTP_USER:      "jchernanmon@unimonserrate.edu.co"
+      SMTP_PASSWORD:  "vegm jfhe tkwf qqpj"
+      MAIL_FROM:      "jchernanmon@unimonserrate.edu.co"
       MAIL_FROM_NAME: "Parqueadero Unimonserrate"
     ports:
       - "8000:8000"
@@ -58,7 +49,6 @@ services:
     volumes:
       - ./backend:/app
 
-  # ─── Frontend React ──────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -66,7 +56,6 @@ services:
     container_name: parqueadero_web
     restart: always
     environment:
-      # VITE_API_URL vacío → el proxy de Vite reenvía al backend internamente
       VITE_API_URL:  ""
       BACKEND_URL:   "http://backend:8000"
     ports:
@@ -75,7 +64,7 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-      - /app/node_modules   # preserva node_modules instalados en la imagen
+      - /app/node_modules  
 
 volumes:
   db_data:

@@ -1,6 +1,3 @@
-"""
-database.py — Conexión y sesión de base de datos (SQLAlchemy + MySQL)
-"""
 import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
@@ -33,7 +30,6 @@ Base = declarative_base()
 
 
 def get_db():
-    """Dependency de FastAPI para inyectar sesión de BD."""
     db = SessionLocal()
     try:
         yield db

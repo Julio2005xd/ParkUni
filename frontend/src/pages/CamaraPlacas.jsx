@@ -1,4 +1,3 @@
-// src/pages/CamaraPlacas.jsx — Cámara OCR: detecta placas y registra entrada/salida
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ingresos, sesiones as sesionesApi } from "../services/api";
@@ -24,8 +23,9 @@ export default function CamaraPlacas() {
   const intervaloRef  = useRef(null);
   const procesandoRef = useRef(false);
 
-  const [eventos,   setEventos]   = useState([]);
-  const [resultado, setResultado] = useState(null);
+  const [eventos,    setEventos]    = useState([]);
+  const [resultado,  setResultado]  = useState(null);
+  const [camaraError, setCamaraError] = useState("");
 
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
@@ -36,21 +36,61 @@ export default function CamaraPlacas() {
       videoRef.current.srcObject.getTracks().forEach(t => t.stop());
     setCamActiva(false);
     setStreaming(false);
+    setCamaraError("");
     procesandoRef.current = false;
     estableRef.current = { placa: "", count: 0 };
   }, []);
 
   async function iniciarCamara() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" },
-      });
+    setCamaraError("");
+
+    // Requiere HTTPS o localhost para acceder a la cámara
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      const msg = "Tu navegador no permite acceso a la cámara. Asegúrate de abrir la app con HTTPS (no HTTP).";
+      setCamaraError(msg);
+      agregarEvento("error", msg, "");
+      return;
+    }
+
+    const intentarConConstraints = async (constraints) => {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
       setCamActiva(true);
       setStreaming(true);
+    };
+
+    try {
+      // facingMode como "ideal" (no obligatorio) para que funcione en desktop
+      await intentarConConstraints({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: { ideal: "environment" } },
+      });
     } catch (err) {
-      agregarEvento("error", "No se pudo acceder a la cámara: " + err.message, "");
+      // Si falla por restricciones exigentes, reintentar solo con video: true
+      if (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError") {
+        try {
+          await intentarConConstraints({ video: true });
+          return;
+        } catch (err2) {
+          err = err2;
+        }
+      }
+
+      let msg;
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        msg = "Permiso de cámara denegado. Haz clic en el ícono de cámara en la barra del navegador y permite el acceso.";
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        msg = "No se encontró ninguna cámara en este dispositivo.";
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        msg = "La cámara está siendo usada por otra aplicación. Ciérrala y vuelve a intentarlo.";
+      } else if (err.name === "SecurityError") {
+        msg = "Acceso a cámara bloqueado por política de seguridad. Usa HTTPS.";
+      } else {
+        msg = "No se pudo acceder a la cámara: " + (err.message || err.name);
+      }
+
+      setCamaraError(msg);
+      agregarEvento("error", msg, "");
     }
   }
 
@@ -96,7 +136,6 @@ export default function CamaraPlacas() {
         }
       }, "image/jpeg", 0.92);
     } catch {
-      // silenciar errores de red
     } finally {
       procesandoRef.current = false;
       setOcr(false);
@@ -146,7 +185,6 @@ export default function CamaraPlacas() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Poppins', sans-serif" }}>
-      {/* Navbar */}
       <div style={{ background: C.bgNavy, padding: "0 20px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 54, position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={() => navigate("/")}
@@ -167,12 +205,9 @@ export default function CamaraPlacas() {
         </div>
       </div>
 
-      {/* Grid — CSS class handles responsive stacking */}
       <div className="camara-grid">
 
-        {/* ── Columna izquierda ── */}
         <div>
-          {/* Video */}
           <div style={{ background: "#0d1b35", borderRadius: 12, overflow: "hidden", position: "relative", border: `2px solid ${streaming ? C.green : C.border}`, marginBottom: 12, boxShadow: streaming ? `0 0 18px ${C.green}33` : "none", transition: "box-shadow 0.3s" }}>
             <video ref={videoRef} style={{ width: "100%", display: "block", minHeight: 220 }} playsInline muted />
             <canvas ref={canvasRef} style={{ display: "none" }} />
@@ -213,7 +248,22 @@ export default function CamaraPlacas() {
             )}
           </div>
 
-          {/* Controles */}
+          {camaraError && (
+            <div style={{
+              background: "#fff0f0", border: "1px solid #f87171", borderRadius: 10,
+              padding: "12px 16px", marginBottom: 12,
+              display: "flex", alignItems: "flex-start", gap: 10,
+            }}>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+              <div>
+                <div style={{ color: "#b91c1c", fontWeight: 700, fontSize: 13, marginBottom: 3 }}>
+                  Error de cámara
+                </div>
+                <div style={{ color: "#7f1d1d", fontSize: 12, lineHeight: 1.5 }}>{camaraError}</div>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
             {!camActiva ? (
               <button onClick={iniciarCamara}
@@ -247,7 +297,6 @@ export default function CamaraPlacas() {
             )}
           </div>
 
-          {/* Upload imagen */}
           <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, marginBottom: 12 }}>
             <div style={{ color: C.muted, fontSize: 12, marginBottom: 8, fontWeight: 600 }}>Procesar imagen estática:</div>
             <label style={{ background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontSize: 13, display: "inline-block" }}>
@@ -264,7 +313,6 @@ export default function CamaraPlacas() {
             )}
           </div>
 
-          {/* OCR raw */}
           {textoRaw && (
             <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px", fontSize: 12 }}>
               <span style={{ color: C.muted, fontWeight: 600 }}>Texto OCR: </span>
@@ -277,7 +325,6 @@ export default function CamaraPlacas() {
             </div>
           )}
 
-          {/* Resultado */}
           {resultado && (
             <div style={{ background: resultado.accion === "entrada" ? C.greenLight : C.primaryLight, border: `1px solid ${resultado.accion === "entrada" ? C.green : C.primary}`, borderRadius: 10, padding: 16, marginTop: 12 }}>
               <div style={{ fontWeight: 700, color: resultado.accion === "entrada" ? C.green : C.primary, fontSize: 15, marginBottom: 8, fontFamily: "'Montserrat',sans-serif" }}>
@@ -298,7 +345,6 @@ export default function CamaraPlacas() {
           )}
         </div>
 
-        {/* ── Columna derecha: log de eventos ── */}
         <div>
           <div
             className="camara-log-panel"
@@ -343,7 +389,6 @@ export default function CamaraPlacas() {
               )}
             </div>
 
-            {/* Modo info */}
             <div style={{ marginTop: 10, padding: "8px 10px", background: C.bg, borderRadius: 8, fontSize: 11 }}>
               <div style={{ fontWeight: 700, color: modo === "auto" ? C.green : C.yellow, marginBottom: 3 }}>
                 {modo === "auto" ? "Modo automático" : "Modo manual"}

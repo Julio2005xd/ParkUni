@@ -1,4 +1,3 @@
-// src/pages/user/UserDashboard.jsx
 import { useState, useEffect, useRef, useCallback } from "react";
 import jsQR from "jsqr";
 import { cuenta as cuentaApi, sesiones as sesionesApi } from "../../services/api";
@@ -39,7 +38,6 @@ const nav = {
   btn:   { background: "rgba(255,255,255,.1)", color: "#fff", border: "1px solid rgba(255,255,255,.2)", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontFamily: "'Poppins',sans-serif" },
 };
 
-/* ── Tabs ────────────────────────────────────────────────────── */
 function Tabs({ tabs, active, onChange }) {
   return (
     <div className="tab-bar">
@@ -58,7 +56,6 @@ function Tabs({ tabs, active, onChange }) {
   );
 }
 
-/** Descarga el QR base64 como PNG */
 function descargarQRImagen(imagenB64, nombre) {
   const a = document.createElement("a");
   a.href = `data:image/png;base64,${imagenB64}`;
@@ -68,7 +65,6 @@ function descargarQRImagen(imagenB64, nombre) {
   document.body.removeChild(a);
 }
 
-/* ── Sección: Mi QR ─────────────────────────────────────────── */
 function MiQR() {
   const [qrData,    setQrData]   = useState(null);
   const [vehiculo,  setVehiculo] = useState(null);
@@ -134,12 +130,37 @@ function MiQR() {
   }, []);
 
   async function iniciarCamara() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    setMsg(null);
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMsg({ ok: false, txt: "El navegador no permite acceso a la cámara. Abre la app con HTTPS." });
+      return;
+    }
+
+    const intentar = async (constraints) => {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
       setCamActiva(true);
-    } catch { setMsg({ ok: false, txt: "No se pudo acceder a la cámara" }); }
+    };
+
+    try {
+      await intentar({ video: { facingMode: { ideal: "environment" } } });
+    } catch (err) {
+      if (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError") {
+        try { await intentar({ video: true }); return; } catch (err2) { err = err2; }
+      }
+      let txt;
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")
+        txt = "Permiso de cámara denegado. Permite el acceso en la barra del navegador.";
+      else if (err.name === "NotFoundError")
+        txt = "No se encontró ninguna cámara en este dispositivo.";
+      else if (err.name === "NotReadableError")
+        txt = "La cámara está siendo usada por otra aplicación. Ciérrala e intenta de nuevo.";
+      else
+        txt = "No se pudo acceder a la cámara: " + (err.message || err.name);
+      setMsg({ ok: false, txt });
+    }
   }
 
   useEffect(() => {
@@ -181,10 +202,8 @@ function MiQR() {
 
       {msg && <div style={msg.ok ? S.alertOk : S.alertErr}>{msg.txt}</div>}
 
-      {/* Tab QR */}
       {tab === "qr" && (
         <>
-          {/* Vehículo */}
           <div style={S.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
               <h3 style={cardTitle}>Mi Vehículo</h3>
@@ -239,7 +258,6 @@ function MiQR() {
             )}
           </div>
 
-          {/* QR */}
           <div style={{ ...S.card, marginTop: 16 }}>
             <h3 style={cardTitle}>Código QR de Acceso</h3>
             {qrData ? (
@@ -283,7 +301,6 @@ function MiQR() {
         </>
       )}
 
-      {/* Tab Escanear */}
       {tab === "escanear" && (
         <div style={S.card}>
           <h3 style={cardTitle}>Escanear QR — Entrada / Salida</h3>
@@ -319,37 +336,32 @@ function MiQR() {
             </div>
           )}
 
-          {/* Código manual */}
           <div style={{ display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
             <input style={{ ...S.input, flex: 1, minWidth: 180 }} placeholder="Pegar código QR…"
               value={codigo} onChange={e => setCodigo(e.target.value)} />
             <button style={S.btnPrimary} onClick={() => validar(codigo)} disabled={!codigo}>Validar</button>
           </div>
 
-          {/* Upload */}
           <label style={{ ...S.btnSecondary, display: "block", textAlign: "center", cursor: "pointer", marginBottom: 10 }}>
             Cargar imagen QR
             <input type="file" accept="image/*" style={{ display: "none" }}
               onChange={e => e.target.files[0] && procesarImagenQR(e.target.files[0])} />
           </label>
 
-          {/* Cámara */}
-          {!camActiva ? (
+          {!camActiva && (
             <button style={S.btnPrimary} onClick={iniciarCamara}>Escanear con cámara</button>
-          ) : (
-            <div>
-              <video ref={videoRef} style={{ width: "100%", borderRadius: 10, background: "#000", maxHeight: 260, objectFit: "cover" }} playsInline />
-              <canvas ref={canvasRef} style={{ display: "none" }} />
-              <button style={{ ...S.btnSecondary, marginTop: 10 }} onClick={detenerCamara}>Detener</button>
-            </div>
           )}
+          <div style={{ display: camActiva ? "block" : "none", marginTop: camActiva ? 10 : 0 }}>
+            <video ref={videoRef} style={{ width: "100%", borderRadius: 10, background: "#000", maxHeight: 260, objectFit: "cover" }} playsInline muted />
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+            <button style={{ ...S.btnSecondary, marginTop: 10 }} onClick={detenerCamara}>Detener</button>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-/* ── Historial ─────────────────────────────────────────────── */
 function Historial() {
   const [items, setItems] = useState([]);
   useEffect(() => { cuentaApi.sesiones().then(setItems).catch(() => {}); }, []);
@@ -386,7 +398,6 @@ function Historial() {
   );
 }
 
-/* ── Facturas ─────────────────────────────────────────────── */
 function Facturas() {
   const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState({});
@@ -427,12 +438,10 @@ function Facturas() {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {items.map(f => (
             <div key={f.id} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              {/* Tipo icono */}
               <div style={{ width: 40, height: 40, background: f.tipo === "visita" ? C.primaryLight : C.accentLight, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                 {f.tipo === "visita" ? "🚗" : "📅"}
               </div>
 
-              {/* Info */}
               <div style={{ flex: 1, minWidth: 160 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
                   <span style={{ fontFamily: "monospace", fontWeight: 800, color: C.primary, fontSize: 13 }}>{f.numero}</span>
@@ -447,13 +456,11 @@ function Facturas() {
                 </div>
               </div>
 
-              {/* Monto */}
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <div style={{ fontWeight: 800, color: C.green, fontSize: 16 }}>${f.monto?.toLocaleString("es-CO")}</div>
                 <div style={{ color: C.muted, fontSize: 11 }}>COP</div>
               </div>
 
-              {/* PDF */}
               <button
                 onClick={() => descargarPdf(f)}
                 disabled={loading[f.id]}
@@ -468,7 +475,6 @@ function Facturas() {
   );
 }
 
-/* ── Dashboard ────────────────────────────────────────────── */
 export default function UserDashboard() {
   const [tab, setTab] = useState("qr");
   const { user, logout } = useAuth();
@@ -480,7 +486,6 @@ export default function UserDashboard() {
       <Navbar user={user} onLogout={handleLogout} />
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 14px" }}>
-        {/* Welcome */}
         <div style={{ background: "linear-gradient(135deg,#0d1b35,#1a2e5a)", borderRadius: 12, padding: "18px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'Montserrat',sans-serif", fontWeight: 800, color: "#fff", fontSize: "clamp(15px,3vw,18px)" }}>

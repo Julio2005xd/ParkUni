@@ -1,15 +1,8 @@
-"""
-schemas.py — Esquemas Pydantic para validación de entrada/salida
-"""
 from datetime import datetime, date
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, field_validator
 import re
 
-
-# ──────────────────────────────────────────────
-# PERSONAS
-# ──────────────────────────────────────────────
 class PersonaBase(BaseModel):
     nombre:    str
     documento: str
@@ -27,16 +20,12 @@ class PersonaOut(PersonaBase):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# USUARIOS REGISTRADOS
-# ──────────────────────────────────────────────
 class UsuarioCreate(BaseModel):
     nombre:    str
     documento: str
     correo:    Optional[EmailStr] = None
     telefono:  Optional[str] = None
-    rol:       str  # estudiante | docente | administrativo
+    rol:       str
 
     @field_validator("rol")
     @classmethod
@@ -46,7 +35,6 @@ class UsuarioCreate(BaseModel):
             raise ValueError(f"Rol debe ser uno de: {roles}")
         return v
 
-
 class UsuarioOut(BaseModel):
     id:            int
     persona:       PersonaOut
@@ -55,10 +43,6 @@ class UsuarioOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# VEHÍCULOS
-# ──────────────────────────────────────────────
 class VehiculoCreate(BaseModel):
     persona_id: int
     placa:      str
@@ -75,7 +59,6 @@ class VehiculoCreate(BaseModel):
             raise ValueError("Formato de placa inválido. Use: ABC123 o ABC-123")
         return v.replace("-", "").replace(" ", "")
 
-
 class VehiculoOut(BaseModel):
     id:    int
     placa: str
@@ -85,13 +68,9 @@ class VehiculoOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# MENSUALIDADES
-# ──────────────────────────────────────────────
 class MensualidadCreate(BaseModel):
     usuario_id:        int
-    periodo:           str   # '2026-05'
+    periodo:           str
     estado_pago:       str
     fecha_vencimiento: date
 
@@ -105,19 +84,13 @@ class MensualidadOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# INGRESOS
-# ──────────────────────────────────────────────
 class IngresoCreate(BaseModel):
     placa:       str
     tipo_usuario: str = "registrado"
 
-
 class IngresoSalida(BaseModel):
     ingreso_id: int
     metodo_pago: str = "efectivo"
-
 
 class IngresoOut(BaseModel):
     id:                 int
@@ -131,10 +104,6 @@ class IngresoOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# PAGOS
-# ──────────────────────────────────────────────
 class PagoOut(BaseModel):
     id:         int
     ingreso_id: int
@@ -145,13 +114,8 @@ class PagoOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# QR
-# ──────────────────────────────────────────────
 class QRValidar(BaseModel):
     codigo: str
-
 
 class QROut(BaseModel):
     id:               int
@@ -162,31 +126,21 @@ class QROut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ──────────────────────────────────────────────
-# OCR (reconocimiento de placa)
-# ──────────────────────────────────────────────
 class OCRResult(BaseModel):
     placa_detectada: str
     confianza:       float
     imagen_procesada: Optional[str] = None  # base64
 
-
-# ──────────────────────────────────────────────
-# DASHBOARD / REPORTES
-# ──────────────────────────────────────────────
 class OcupacionOut(BaseModel):
     capacidad_total: int
     ocupados:        int
     disponibles:     int
     porcentaje:      float
 
-
 class ReporteIngresosOut(BaseModel):
     fecha:          str
     total_ingresos: int
     total_recaudado: float
-
 
 class AlertaOut(BaseModel):
     id:         int
@@ -195,5 +149,4 @@ class AlertaOut(BaseModel):
     mensaje:    str
     fecha_envio: datetime
     estado:     str
-
     model_config = {"from_attributes": True}

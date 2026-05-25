@@ -1,4 +1,3 @@
-// src/pages/user/UserLogin.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../../services/api";
@@ -35,7 +34,6 @@ export default function UserLogin() {
   return (
     <div style={a.bg}>
       <div style={a.card}>
-        {/* Logo */}
         <div style={brand}>
           <img src={logo} alt="ParqUni" style={brandImg} />
           <div>

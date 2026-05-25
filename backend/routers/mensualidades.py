@@ -1,6 +1,3 @@
-"""
-routers/mensualidades.py — Gestión de mensualidades y reportes
-"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
@@ -24,7 +21,6 @@ def registrar_mensualidad(datos: MensualidadCreate, db: Session = Depends(get_db
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # Upsert: actualizar si ya existe para ese período
     existente = db.query(Mensualidad).filter(
         Mensualidad.usuario_id == datos.usuario_id,
         Mensualidad.periodo == datos.periodo
@@ -43,13 +39,8 @@ def registrar_mensualidad(datos: MensualidadCreate, db: Session = Depends(get_db
     db.refresh(mensualidad)
     return mensualidad
 
-
 @router.get("/validar/{documento}")
 def validar_mensualidad(documento: str, db: Session = Depends(get_db)):
-    """
-    Endpoint tipo API interna para validar mensualidad vigente.
-    Busca por documento de identidad del usuario.
-    """
     from models import Persona
     persona = db.query(Persona).filter(Persona.documento == documento).first()
     if not persona or not persona.usuario:
@@ -78,7 +69,6 @@ def validar_mensualidad(documento: str, db: Session = Depends(get_db)):
         "documento": documento
     }
 
-
 @router.get("/usuario/{usuario_id}", response_model=List[MensualidadOut])
 def mensualidades_usuario(usuario_id: int, db: Session = Depends(get_db)):
     return db.query(Mensualidad).filter(
@@ -86,9 +76,6 @@ def mensualidades_usuario(usuario_id: int, db: Session = Depends(get_db)):
     ).order_by(Mensualidad.periodo.desc()).all()
 
 
-# ──────────────────────────────────────────────────────────────
-# REPORTES
-# ──────────────────────────────────────────────────────────────
 reportes_router = APIRouter(prefix="/reportes", tags=["Reportes"])
 
 
@@ -119,7 +106,6 @@ def reporte_ingresos_dia(fecha: str | None = None, db: Session = Depends(get_db)
         {"fecha": str(r.fecha), "total_ingresos": r.total_ingresos}
         for r in resultado
     ]
-
 
 @reportes_router.get("/recaudo-dia")
 def reporte_recaudo_dia(db: Session = Depends(get_db)):

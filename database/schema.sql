@@ -1,18 +1,8 @@
--- ============================================================
---  Sistema Inteligente de Parqueadero Universitario
---  Base de Datos MySQL 8.0 — Esquema completo
---  Fundación Universitaria Unimonserrate — Ingeniería en Software
--- ============================================================
-
 CREATE DATABASE IF NOT EXISTS parqueadero_unimonserrate
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
 USE parqueadero_unimonserrate;
-
--- ============================================================
---  TABLAS LEGACY (compatibilidad con módulos históricos)
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS personas (
   id             INT AUTO_INCREMENT PRIMARY KEY,
@@ -123,12 +113,6 @@ CREATE TABLE IF NOT EXISTS configuracion_parqueadero (
 INSERT IGNORE INTO configuracion_parqueadero (capacidad_total, tarifa_minuto, tarifa_hora)
 VALUES (100, 100.00, 3000.00);
 
--- ============================================================
---  TABLAS v2 — Sistema con Auth JWT + Billing + QR Dinámico
---  (También creadas automáticamente por SQLAlchemy al iniciar)
--- ============================================================
-
--- Cuentas de usuario (autenticación propia, admin o usuario)
 CREATE TABLE IF NOT EXISTS cuentas_usuario (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   correo        VARCHAR(150) NOT NULL UNIQUE,
@@ -143,7 +127,6 @@ CREATE TABLE IF NOT EXISTS cuentas_usuario (
   INDEX idx_cuentas_documento (documento)
 );
 
--- Vehículos vinculados a una cuenta (1 vehículo por cuenta)
 CREATE TABLE IF NOT EXISTS vehiculos_cuenta (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   cuenta_id     INT NOT NULL,
@@ -157,7 +140,6 @@ CREATE TABLE IF NOT EXISTS vehiculos_cuenta (
   FOREIGN KEY (cuenta_id) REFERENCES cuentas_usuario(id) ON DELETE CASCADE
 );
 
--- Códigos QR de acceso (visita o mensualidad)
 CREATE TABLE IF NOT EXISTS qr_parqueo (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   cuenta_id   INT NOT NULL,
@@ -172,7 +154,6 @@ CREATE TABLE IF NOT EXISTS qr_parqueo (
   FOREIGN KEY (vehiculo_id) REFERENCES vehiculos_cuenta(id)
 );
 
--- Facturas electrónicas (visita o mensualidad)
 CREATE TABLE IF NOT EXISTS facturas_v2 (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   numero        VARCHAR(30)   NOT NULL UNIQUE,
@@ -187,7 +168,6 @@ CREATE TABLE IF NOT EXISTS facturas_v2 (
   FOREIGN KEY (cuenta_id) REFERENCES cuentas_usuario(id)
 );
 
--- Sesiones de parqueo: entrada + salida + cobro
 CREATE TABLE IF NOT EXISTS sesiones_parqueo (
   id               INT AUTO_INCREMENT PRIMARY KEY,
   cuenta_id        INT,
@@ -207,12 +187,11 @@ CREATE TABLE IF NOT EXISTS sesiones_parqueo (
   FOREIGN KEY (factura_id) REFERENCES facturas_v2(id)
 );
 
--- Mensualidades creadas por admin
 CREATE TABLE IF NOT EXISTS mensualidades_v2 (
   id           INT AUTO_INCREMENT PRIMARY KEY,
   cuenta_id    INT NOT NULL,
   qr_id        INT,
-  periodo      VARCHAR(7)    NOT NULL,       -- Formato: "2026-05"
+  periodo      VARCHAR(7)    NOT NULL,
   fecha_inicio DATE NOT NULL,
   fecha_fin    DATE NOT NULL,
   monto        DECIMAL(12,2) NOT NULL DEFAULT 80000.00,
@@ -223,10 +202,6 @@ CREATE TABLE IF NOT EXISTS mensualidades_v2 (
   FOREIGN KEY (qr_id)      REFERENCES qr_parqueo(id),
   FOREIGN KEY (factura_id) REFERENCES facturas_v2(id)
 );
-
--- ============================================================
---  Vistas útiles (legacy)
--- ============================================================
 
 CREATE OR REPLACE VIEW vista_ingresos_activos AS
 SELECT
@@ -249,10 +224,6 @@ SELECT
   (SELECT capacidad_total FROM configuracion_parqueadero LIMIT 1) - COUNT(*) AS disponibles
 FROM ingresos
 WHERE estado = 'activo';
-
--- ============================================================
---  Índices de rendimiento
--- ============================================================
 
 CREATE INDEX IF NOT EXISTS idx_ingresos_estado   ON ingresos(estado);
 CREATE INDEX IF NOT EXISTS idx_ingresos_vehiculo ON ingresos(vehiculo_id);

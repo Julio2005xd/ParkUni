@@ -1,6 +1,3 @@
-"""
-auth.py — Utilidades JWT y dependencias de autenticación
-"""
 import os
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
@@ -18,8 +15,6 @@ TOKEN_HOURS = 48
 pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
-
-# ── Hash helpers ───────────────────────────────────────────────────
 def verificar_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
@@ -27,8 +22,6 @@ def verificar_password(plain: str, hashed: str) -> bool:
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-
-# ── Token helpers ──────────────────────────────────────────────────
 def crear_token(cuenta_id: int, rol: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=TOKEN_HOURS)
     payload = {"sub": str(cuenta_id), "rol": rol, "exp": expire}
@@ -41,8 +34,6 @@ def _decodificar_token(token: str) -> dict:
     except JWTError:
         return {}
 
-
-# ── FastAPI dependencies ───────────────────────────────────────────
 def obtener_cuenta_actual(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
@@ -65,7 +56,6 @@ def obtener_cuenta_actual(
     if not cuenta:
         raise exc
     return cuenta
-
 
 def requerir_admin(
     cuenta: CuentaUsuario = Depends(obtener_cuenta_actual),

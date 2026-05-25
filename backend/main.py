@@ -1,8 +1,3 @@
-"""
-main.py — FastAPI App Principal
-Sistema Inteligente de Parqueadero Universitario
-Fundación Universitaria Unimonserrate
-"""
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,10 +23,8 @@ from routers.admin    import router as router_admin
 from services.ocr_service import ocr_service
 from auth import hash_password
 
-# ── Crear tablas ─────────────────────────────────────────────────
 Base.metadata.create_all(bind=engine)
 
-# ── Seed admin por defecto ────────────────────────────────────────
 def _seed_admin():
     db = SessionLocal()
     try:
@@ -59,9 +52,8 @@ def _seed_admin():
 
 _seed_admin()
 
-# ── FastAPI ───────────────────────────────────────────────────────
 app = FastAPI(
-    title="🚗 Sistema Inteligente de Parqueadero — Unimonserrate",
+    title="Sistema Inteligente de Parqueadero — Unimonserrate",
     description=(
         "API REST para control automatizado de acceso vehicular: "
         "autenticación JWT, QR de entrada/salida, OCR de placas, "
@@ -74,7 +66,7 @@ app = FastAPI(
     },
 )
 
-# ── CORS ──────────────────────────────────────────────────────────
+#CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173", "*"],
@@ -83,19 +75,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Registrar routers v2 ──────────────────────────────────────────
+#Registrar routers v
 app.include_router(router_auth)
 app.include_router(router_cuenta)
 app.include_router(router_sesiones)
 app.include_router(router_admin)
 
-# ── Registrar routers legacy ──────────────────────────────────────
+#Registrar routers legacy
 app.include_router(router_usuarios)
 app.include_router(router_ingresos)
 app.include_router(router_mensualidades)
 app.include_router(reportes_router)
 
-# ── Root ──────────────────────────────────────────────────────────
+#Root
 @app.get("/", tags=["Root"])
 def raiz():
     return {
@@ -106,13 +98,11 @@ def raiz():
         "admin":    "admin@parqueadero.edu.co / admin123",
     }
 
-
 @app.get("/health", tags=["Root"])
 def health():
     return {"status": "ok"}
 
-
-# ── OCR endpoint ──────────────────────────────────────────────────
+#OCR endpoint
 @app.post("/ocr/detectar-placa", tags=["OCR"])
 async def detectar_placa(imagen: UploadFile = File(...)):
     """Recibe imagen y retorna placa detectada via OCR multi-estrategia."""
@@ -120,8 +110,7 @@ async def detectar_placa(imagen: UploadFile = File(...)):
     resultado = ocr_service.procesar_imagen_bytes(contenido)
     return resultado
 
-
-# ── QR decode desde imagen ────────────────────────────────────────
+#QR decode desde imagen
 @app.post("/qr/decodificar", tags=["QR"])
 async def decodificar_qr_imagen(imagen: UploadFile = File(...)):
     """Decodifica un código QR desde imagen subida."""

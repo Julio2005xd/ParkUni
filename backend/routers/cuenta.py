@@ -1,6 +1,3 @@
-"""
-routers/cuenta.py — Rutas del usuario autenticado (perfil, vehículo, QR, historial)
-"""
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -16,21 +13,17 @@ from services.invoice_service import invoice_service
 
 router = APIRouter(prefix="/cuenta", tags=["Mi Cuenta"])
 
-
-# ── Schemas ────────────────────────────────────────────────────────
 class VehiculoIn(BaseModel):
     placa:          str
     marca:          Optional[str] = None
     modelo:         Optional[str] = None
     color:          Optional[str] = None
-    tipo_vehiculo:  Optional[str] = "carro"   # "carro" | "moto"
-
+    tipo_vehiculo:  Optional[str] = "carro"
 
 class PerfilUpdate(BaseModel):
     nombre:    Optional[str] = None
     telefono:  Optional[str] = None
     documento: Optional[str] = None
-
 
 def _normalizar_placa(placa: str) -> str:
     p = re.sub(r"[^A-Z0-9]", "", placa.upper().strip())
@@ -41,8 +34,6 @@ def _normalizar_placa(placa: str) -> str:
         )
     return p
 
-
-# ── Perfil ──────────────────────────────────────────────────────────
 @router.get("/perfil")
 def perfil(cuenta: CuentaUsuario = Depends(obtener_cuenta_actual)):
     return {
@@ -53,7 +44,6 @@ def perfil(cuenta: CuentaUsuario = Depends(obtener_cuenta_actual)):
         "telefono":  cuenta.telefono,
         "rol":       cuenta.rol,
     }
-
 
 @router.put("/perfil")
 def actualizar_perfil(
@@ -76,8 +66,6 @@ def actualizar_perfil(
     db.commit()
     return {"mensaje": "Perfil actualizado correctamente"}
 
-
-# ── Vehículo ───────────────────────────────────────────────────────
 @router.get("/vehiculo")
 def obtener_vehiculo(
     cuenta: CuentaUsuario = Depends(obtener_cuenta_actual),
@@ -96,7 +84,6 @@ def obtener_vehiculo(
         }
     }
 
-
 @router.post("/vehiculo", status_code=201)
 def registrar_vehiculo(
     datos: VehiculoIn,
@@ -105,7 +92,6 @@ def registrar_vehiculo(
 ):
     placa = _normalizar_placa(datos.placa)
 
-    # Solo 1 vehículo por cuenta
     existente = db.query(VehiculoCuenta).filter(
         VehiculoCuenta.cuenta_id == cuenta.id
     ).first()
@@ -131,7 +117,6 @@ def registrar_vehiculo(
     db.commit()
     db.refresh(v)
     return {"mensaje": "Vehículo registrado", "vehiculo_id": v.id, "placa": v.placa, "tipo_vehiculo": v.tipo_vehiculo}
-
 
 @router.put("/vehiculo")
 def actualizar_vehiculo(
@@ -160,8 +145,6 @@ def actualizar_vehiculo(
     db.commit()
     return {"mensaje": "Vehículo actualizado", "placa": v.placa, "tipo_vehiculo": v.tipo_vehiculo}
 
-
-# ── QR ─────────────────────────────────────────────────────────────
 @router.get("/qr")
 def obtener_qr(
     cuenta: CuentaUsuario = Depends(obtener_cuenta_actual),
@@ -191,7 +174,6 @@ def obtener_qr(
         }
     }
 
-
 @router.post("/qr/generar", status_code=201)
 def generar_qr(
     cuenta: CuentaUsuario = Depends(obtener_cuenta_actual),
@@ -202,7 +184,6 @@ def generar_qr(
     if not v:
         raise HTTPException(status_code=400, detail="Registra tu vehículo antes de generar el QR")
 
-    # Desactivar QR de visita anteriores
     db.query(QRParqueo).filter(
         QRParqueo.cuenta_id == cuenta.id,
         QRParqueo.tipo == "visita",
@@ -230,8 +211,6 @@ def generar_qr(
         "imagen_b64": qr.imagen_b64,
     }
 
-
-# ── Historial de sesiones ─────────────────────────────────────────
 @router.get("/sesiones")
 def historial_sesiones(
     skip: int = 0,
@@ -261,8 +240,6 @@ def historial_sesiones(
         for s in sesiones
     ]
 
-
-# ── Facturas ───────────────────────────────────────────────────────
 @router.get("/facturas")
 def mis_facturas(
     skip: int = 0,
@@ -290,7 +267,6 @@ def mis_facturas(
         }
         for f in facturas
     ]
-
 
 @router.get("/facturas/{factura_id}/pdf")
 def descargar_mi_factura_pdf(

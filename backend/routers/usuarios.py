@@ -1,6 +1,3 @@
-"""
-routers/usuarios.py — CRUD de usuarios registrados
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -15,8 +12,6 @@ router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 @router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 def crear_usuario(datos: UsuarioCreate, db: Session = Depends(get_db)):
-    """Registra un nuevo usuario (estudiante / docente / administrativo)."""
-    # Verificar documento único
     if db.query(Persona).filter(Persona.documento == datos.documento).first():
         raise HTTPException(
             status_code=400,
@@ -45,7 +40,6 @@ def crear_usuario(datos: UsuarioCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[UsuarioOut])
 def listar_usuarios(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    """Lista todos los usuarios registrados."""
     return (
         db.query(UsuarioRegistrado)
         .offset(skip)
@@ -83,8 +77,6 @@ def desactivar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Usuario desactivado correctamente"}
 
-
-# ──────────── Vehículos ────────────
 @router.post("/{usuario_id}/vehiculos", response_model=VehiculoOut, status_code=201)
 def agregar_vehiculo(
     usuario_id: int, datos: VehiculoCreate, db: Session = Depends(get_db)
@@ -122,8 +114,6 @@ def vehiculos_usuario(usuario_id: int, db: Session = Depends(get_db)):
         Vehiculo.persona_id == usuario.persona_id
     ).all()
 
-
-# ──────────── Códigos QR ────────────
 @router.post("/{usuario_id}/qr", response_model=dict, status_code=201)
 def generar_qr(usuario_id: int, db: Session = Depends(get_db)):
     """Genera un código QR único para el usuario."""
@@ -133,7 +123,6 @@ def generar_qr(usuario_id: int, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # Desactivar QR anteriores
     db.query(CodigoQR).filter(
         CodigoQR.usuario_id == usuario_id,
         CodigoQR.estado == "activo"

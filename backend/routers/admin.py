@@ -1,7 +1,3 @@
-"""
-routers/admin.py — Panel de administración:
-  cuentas, mensualidades, reportes CSV/Excel, correos de alerta
-"""
 import io
 import csv
 from datetime import date, datetime, timedelta
@@ -35,22 +31,18 @@ from services.invoice_service import invoice_service
 
 router = APIRouter(prefix="/admin", tags=["Administración"])
 
-
-# ══════════════════════════════════════════════════════════════════
-#  SCHEMAS
-# ══════════════════════════════════════════════════════════════════
 class CuentaAdminCreate(BaseModel):
-    nombre:    str
-    correo:    EmailStr
-    password:  str
+    nombre: str
+    correo: EmailStr
+    password: str
     documento: Optional[str] = None
-    telefono:  Optional[str] = None
-    rol:       str = "usuario"   # "usuario" | "admin"
+    telefono: Optional[str] = None
+    rol: str = "usuario"
 
 
 class MensualidadCreate(BaseModel):
     cuenta_id:    int
-    periodo:      str          # "2026-05"
+    periodo:      str
     fecha_inicio: date
     fecha_fin:    date
     monto:        float = 80000.0
@@ -62,9 +54,6 @@ class AlertaEmailRequest(BaseModel):
     mensaje:   str
 
 
-# ══════════════════════════════════════════════════════════════════
-#  CUENTAS
-# ══════════════════════════════════════════════════════════════════
 @router.get("/cuentas")
 def listar_cuentas(
     skip: int = 0, limit: int = 100,
@@ -93,7 +82,6 @@ def listar_cuentas(
             "creado_en": c.creado_en.isoformat(),
         })
     return resultado
-
 
 @router.post("/cuentas", status_code=201)
 def crear_cuenta(
@@ -124,7 +112,6 @@ def crear_cuenta(
     db.refresh(c)
     return {"mensaje": "Cuenta creada", "cuenta_id": c.id}
 
-
 @router.put("/cuentas/{cuenta_id}/toggle")
 def toggle_cuenta(
     cuenta_id: int,
@@ -139,10 +126,6 @@ def toggle_cuenta(
     estado = "activada" if c.activo else "desactivada"
     return {"mensaje": f"Cuenta {estado}", "activo": c.activo}
 
-
-# ══════════════════════════════════════════════════════════════════
-#  MENSUALIDADES
-# ══════════════════════════════════════════════════════════════════
 @router.get("/mensualidades")
 def listar_mensualidades(
     skip: int = 0, limit: int = 100,
@@ -155,7 +138,6 @@ def listar_mensualidades(
 
     resultado = []
     for m in mens:
-        # Contar entradas y salidas (sesiones completadas) dentro del periodo
         entradas = db.query(func.count(SesionParqueo.id)).filter(
             SesionParqueo.cuenta_id == m.cuenta_id,
             SesionParqueo.tipo == "mensualidad",
@@ -194,7 +176,6 @@ def listar_mensualidades(
         })
     return resultado
 
-
 @router.post("/mensualidades", status_code=201)
 async def crear_mensualidad(
     datos: MensualidadCreate,
@@ -205,7 +186,6 @@ async def crear_mensualidad(
     if not cuenta:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # Evitar duplicado en el mismo periodo
     dup = db.query(MensualidadV2).filter(
         MensualidadV2.cuenta_id == datos.cuenta_id,
         MensualidadV2.periodo == datos.periodo,
@@ -216,7 +196,6 @@ async def crear_mensualidad(
             detail=f"Ya existe mensualidad para {datos.periodo}"
         )
 
-    # Generar factura de mensualidad
     total = db.query(func.count(FacturaV2.id)).scalar() or 0
     num   = f"FAC-{date.today().year}-{total + 1:05d}"
     fac   = FacturaV2(
@@ -244,7 +223,6 @@ async def crear_mensualidad(
     db.commit()
     db.refresh(mens)
 
-    # Enviar notificación
     try:
         await email_service.enviar_mensualidad(
             correo=cuenta.correo,
@@ -260,7 +238,6 @@ async def crear_mensualidad(
 
     return {"mensaje": "Mensualidad creada", "mensualidad_id": mens.id}
 
-
 @router.post("/mensualidades/{mens_id}/generar-qr")
 def generar_qr_mensualidad(
     mens_id: int,
@@ -273,7 +250,6 @@ def generar_qr_mensualidad(
 
     cuenta = mens.cuenta
 
-    # Desactivar QR de mensualidad anteriores para esta cuenta
     db.query(QRParqueo).filter(
         QRParqueo.cuenta_id == cuenta.id,
         QRParqueo.tipo == "mensualidad",
@@ -300,7 +276,6 @@ def generar_qr_mensualidad(
         "codigo":     codigo,
         "imagen_b64": img_b64,
     }
-
 
 @router.put("/mensualidades/{mens_id}/estado")
 def cambiar_estado_mensualidad(
@@ -333,10 +308,6 @@ def eliminar_mensualidad(
     db.commit()
     return {"mensaje": "Mensualidad cancelada"}
 
-
-# ══════════════════════════════════════════════════════════════════
-#  DASHBOARD ADMIN
-# ══════════════════════════════════════════════════════════════════
 @router.get("/dashboard")
 def dashboard(
     _: CuentaUsuario = Depends(requerir_admin),
@@ -377,10 +348,6 @@ def dashboard(
         "fecha":                hoy.isoformat(),
     }
 
-
-# ══════════════════════════════════════════════════════════════════
-#  REPORTES CSV / EXCEL
-# ══════════════════════════════════════════════════════════════════
 def _sesiones_query(db: Session, tipo_reporte: str, fecha_inicio=None, fecha_fin=None):
     q = db.query(SesionParqueo)
     if tipo_reporte == "visitas":
@@ -392,7 +359,6 @@ def _sesiones_query(db: Session, tipo_reporte: str, fecha_inicio=None, fecha_fin
     if fecha_fin:
         q = q.filter(SesionParqueo.entrada_at <= fecha_fin)
     return q.order_by(SesionParqueo.entrada_at.desc()).all()
-
 
 @router.get("/reportes/visitas")
 def reporte_visitas(
@@ -429,7 +395,6 @@ def reporte_visitas(
         ws = wb.active
         ws.title = "Reporte Visitas"
 
-        # Encabezado
         header_fill = PatternFill("solid", fgColor="1A2744")
         for col, h in enumerate(headers_cols, 1):
             cell = ws.cell(row=1, column=col, value=h)
@@ -454,7 +419,6 @@ def reporte_visitas(
             headers={"Content-Disposition": f"attachment; filename={nombre}"},
         )
 
-    # CSV fallback
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(headers_cols)
@@ -467,7 +431,6 @@ def reporte_visitas(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={nombre}"},
     )
-
 
 @router.get("/reportes/mensualidades")
 def reporte_mensualidades(
@@ -532,10 +495,6 @@ def reporte_mensualidades(
         headers={"Content-Disposition": f"attachment; filename={nombre}"},
     )
 
-
-# ══════════════════════════════════════════════════════════════════
-#  EMAIL DE ALERTA
-# ══════════════════════════════════════════════════════════════════
 @router.post("/email/alerta")
 async def enviar_alerta(
     datos: AlertaEmailRequest,
@@ -558,10 +517,6 @@ async def enviar_alerta(
         "mensaje": "Alerta enviada correctamente" if enviado else "Email no configurado (logged en consola)",
     }
 
-
-# ══════════════════════════════════════════════════════════════════
-#  FACTURAS — descargar PDF / reenviar email
-# ══════════════════════════════════════════════════════════════════
 @router.get("/facturas/{factura_id}/pdf")
 def descargar_factura_pdf(
     factura_id: int,
@@ -642,7 +597,6 @@ async def reenviar_factura(
     }
 
 
-# ── Helper: generar PDF según tipo ───────────────────────────────
 def _generar_pdf_factura(factura: FacturaV2, cuenta, db: Session) -> Optional[bytes]:
     if not cuenta:
         return None

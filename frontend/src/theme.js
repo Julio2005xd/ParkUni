@@ -1,4 +1,3 @@
-// src/theme.js — Paleta de colores Unimonserrate + estilos compartidos
 export const C = {
   bg:           "#f0f4f9",
   bgWhite:      "#ffffff",
@@ -150,7 +149,6 @@ export const S = {
   },
 };
 
-// Estilos de página de autenticación (login/register)
 export const authPageStyles = {
   bg: {
     minHeight: "100vh",

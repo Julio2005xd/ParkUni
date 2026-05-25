@@ -1,23 +1,16 @@
-"""
-routers/auth.py — Login, registro y perfil
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-
 from database import get_db
 from models import CuentaUsuario
 from auth import hash_password, verificar_password, crear_token, obtener_cuenta_actual
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-
-# ── Schemas ────────────────────────────────────────────────────────
 class LoginRequest(BaseModel):
     correo: str
     password: str
-
 
 class RegisterRequest(BaseModel):
     nombre: str
@@ -26,7 +19,6 @@ class RegisterRequest(BaseModel):
     documento: Optional[str] = None
     telefono: Optional[str] = None
 
-
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -34,8 +26,6 @@ class TokenResponse(BaseModel):
     nombre: str
     cuenta_id: int
 
-
-# ── Endpoints ──────────────────────────────────────────────────────
 @router.post("/login", response_model=TokenResponse)
 def login(datos: LoginRequest, db: Session = Depends(get_db)):
     """Login para admin y usuario. Retorna JWT Bearer token."""
@@ -57,7 +47,6 @@ def login(datos: LoginRequest, db: Session = Depends(get_db)):
         nombre=cuenta.nombre,
         cuenta_id=cuenta.id,
     )
-
 
 @router.post("/registrar", status_code=201)
 def registrar_usuario(datos: RegisterRequest, db: Session = Depends(get_db)):
@@ -101,7 +90,6 @@ def registrar_usuario(datos: RegisterRequest, db: Session = Depends(get_db)):
         "cuenta_id": cuenta.id,
         "mensaje": "Cuenta creada exitosamente",
     }
-
 
 @router.get("/me")
 def mi_perfil(

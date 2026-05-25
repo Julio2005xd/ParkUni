@@ -1,7 +1,3 @@
-"""
-routers/sesiones.py — Gestión de sesiones de parqueo
-Lógica principal: QR 1er escaneo = entrada, 2do = salida + factura
-"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -22,13 +18,11 @@ from services.invoice_service import invoice_service
 
 router = APIRouter(prefix="/sesiones", tags=["Sesiones"])
 
-# ── Tarifas ────────────────────────────────────────────────────────
-TARIFA_MINUTO_CARRO = Decimal("100.00")   # $100 COP/min — carro
-TARIFA_MINUTO_MOTO  = Decimal("50.00")    # $50  COP/min — moto (50% descuento)
-TARIFA_DIA_CARRO    = Decimal("30000.00") # tope diario carro
-TARIFA_DIA_MOTO     = Decimal("15000.00") # tope diario moto
+TARIFA_MINUTO_CARRO = Decimal("100.00")
+TARIFA_MINUTO_MOTO  = Decimal("50.00")
+TARIFA_DIA_CARRO    = Decimal("30000.00")
+TARIFA_DIA_MOTO     = Decimal("15000.00")
 
-# Alias legacy para compatibilidad con sesiones activas sin tipo
 TARIFA_MINUTO = TARIFA_MINUTO_CARRO
 TARIFA_DIA    = TARIFA_DIA_CARRO
 
@@ -53,8 +47,6 @@ def _num_factura(db: Session) -> str:
     total = db.query(func.count(FacturaV2.id)).scalar() or 0
     return f"FAC-{date.today().year}-{total + 1:05d}"
 
-
-# ── POST /sesiones/validar-qr ──────────────────────────────────────
 @router.post("/validar-qr")
 async def validar_qr(datos: dict, db: Session = Depends(get_db)):
     """
@@ -80,13 +72,11 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
     tipo_vehiculo = vehiculo.tipo_vehiculo if vehiculo else "carro"
     hoy           = date.today()
 
-    # ── Sesión activa del mismo QR ──────────────────────────────
     sesion_activa = db.query(SesionParqueo).filter(
         SesionParqueo.qr_id == qr.id,
         SesionParqueo.estado == "activa",
     ).first()
 
-    # ══ MENSUALIDAD ══════════════════════════════════════════════
     if qr.tipo == "mensualidad":
         mens = db.query(MensualidadV2).filter(
             MensualidadV2.cuenta_id == qr.cuenta_id,
@@ -101,7 +91,6 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
             }
 
         if sesion_activa:
-            # SALIDA mensualidad — sin cobro, solo registrar tiempo
             ahora = now_col()
             mins  = int((ahora - sesion_activa.entrada_at).total_seconds() / 60)
             sesion_activa.salida_at        = ahora
@@ -110,7 +99,6 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
             sesion_activa.estado           = "completada"
             db.commit()
 
-            # Contar entradas totales del usuario con mensualidad
             total_entradas = db.query(SesionParqueo).filter(
                 SesionParqueo.cuenta_id == cuenta.id,
                 SesionParqueo.tipo == "mensualidad",
@@ -131,7 +119,6 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
                 "mensaje":       f"✅ Salida registrada — Mensualidad activa | Usos del mes: {total_entradas}",
             }
         else:
-            # ENTRADA mensualidad — registrar sin cobro
             s = SesionParqueo(
                 cuenta_id=cuenta.id, qr_id=qr.id, placa=placa,
                 tipo="mensualidad", tipo_vehiculo=tipo_vehiculo,
@@ -155,13 +142,11 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
                 "usuario":       cuenta.nombre,
                 "entrada":       s.entrada_at.isoformat(),
                 "total_usos":    total_entradas,
-                "mensaje":       f"✅ Entrada registrada — Mensualidad activa | Usos totales: {total_entradas}",
+                "mensaje":       f"Entrada registrada — Mensualidad activa | Usos totales: {total_entradas}",
                 "vencimiento":   mens.fecha_fin.isoformat(),
             }
 
-    # ══ VISITA ════════════════════════════════════════════════════
     if sesion_activa:
-        # SALIDA — calcular cobro y generar factura
         ahora = now_col()
         cobro = _calcular(sesion_activa.entrada_at, ahora, sesion_activa.tipo_vehiculo or tipo_vehiculo)
 
@@ -186,7 +171,6 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
         sesion_activa.factura_id       = factura.id
         db.commit()
 
-        # Generar PDF y enviar por email
         try:
             pdf = invoice_service.generar_visita(
                 numero=num,
@@ -228,10 +212,9 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
             "salida":      ahora.isoformat(),
             "duracion":    cobro["desc"],
             "valor":       float(cobro["valor"]),
-            "mensaje":     f"✅ Salida registrada — Total: ${cobro['valor']:,.0f} COP",
+            "mensaje":     f"Salida registrada — Total: ${cobro['valor']:,.0f} COP",
         }
     else:
-        # ENTRADA
         s = SesionParqueo(
             cuenta_id=cuenta.id, qr_id=qr.id, placa=placa,
             tipo="visita", tipo_vehiculo=tipo_vehiculo,
@@ -252,8 +235,6 @@ async def validar_qr(datos: dict, db: Session = Depends(get_db)):
             "mensaje":       f"✅ Entrada registrada ({tv_label}) — Escanea al salir para registrar el pago",
         }
 
-
-# ── POST /sesiones/camara-placa ────────────────────────────────────
 @router.post("/camara-placa")
 def registrar_por_placa(datos: dict, db: Session = Depends(get_db)):
     """
@@ -264,20 +245,17 @@ def registrar_por_placa(datos: dict, db: Session = Depends(get_db)):
     if not re.match(r"^[A-Z]{3}[0-9]{2}[0-9A-Z]$", placa):
         raise HTTPException(status_code=400, detail=f"Placa inválida: '{placa}'")
 
-    # Buscar vehículo registrado
     vehiculo = db.query(VehiculoCuenta).filter(
         VehiculoCuenta.placa == placa
     ).first()
     tipo_vehiculo = vehiculo.tipo_vehiculo if vehiculo else "carro"
 
-    # Buscar sesión activa por placa
     sesion_activa = db.query(SesionParqueo).filter(
         SesionParqueo.placa == placa,
         SesionParqueo.estado == "activa",
     ).first()
 
     if sesion_activa:
-        # SALIDA por cámara
         ahora = now_col()
         cobro = _calcular(sesion_activa.entrada_at, ahora, sesion_activa.tipo_vehiculo or tipo_vehiculo)
 
@@ -311,10 +289,9 @@ def registrar_por_placa(datos: dict, db: Session = Depends(get_db)):
             "duracion": cobro["desc"],
             "valor":    float(cobro["valor"]),
             "usuario":  vehiculo.cuenta.nombre if vehiculo else "visitante",
-            "mensaje":  f"✅ Salida — Total: ${cobro['valor']:,.0f} COP",
+            "mensaje":  f"Salida — Total: ${cobro['valor']:,.0f} COP",
         }
     else:
-        # ENTRADA por cámara
         s = SesionParqueo(
             cuenta_id=vehiculo.cuenta_id if vehiculo else None,
             placa=placa,
@@ -334,11 +311,9 @@ def registrar_por_placa(datos: dict, db: Session = Depends(get_db)):
             "entrada":       s.entrada_at.isoformat(),
             "usuario":       vehiculo.cuenta.nombre if vehiculo else "visitante",
             "registrado":    vehiculo is not None,
-            "mensaje":       f"✅ Entrada registrada por cámara ({tv_label})",
+            "mensaje":       f"Entrada registrada por cámara ({tv_label})",
         }
 
-
-# ── GET /sesiones/activas (admin) ─────────────────────────────────
 @router.get("/activas")
 def sesiones_activas(
     _: CuentaUsuario = Depends(requerir_admin),
@@ -372,8 +347,6 @@ def sesiones_activas(
         })
     return result
 
-
-# ── GET /sesiones/historial (admin) ───────────────────────────────
 @router.get("/historial")
 def historial_admin(
     skip: int = 0,

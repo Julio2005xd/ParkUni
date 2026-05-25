@@ -1,4 +1,3 @@
-// src/pages/admin/AdminReportes.jsx — Descarga de reportes CSV/Excel
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { admin as adminApi } from "../../services/api";
@@ -18,7 +17,6 @@ function ReporteCard({ icon, title, desc, onCsv, onExcel, extra, accentColor }) 
 
   return (
     <div style={{ background: C.bgWhite, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(13,27,53,0.06)" }}>
-      {/* Top accent bar */}
       <div style={{ height: 4, background: `linear-gradient(90deg, ${color}, ${color}99)` }} />
       <div style={{ padding: 24 }}>
         <div style={{ width: 52, height: 52, background: `${color}18`, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, marginBottom: 14 }}>
@@ -63,7 +61,6 @@ export default function AdminReportes() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Poppins', sans-serif" }}>
-      {/* Navbar */}
       <div style={{ background: C.bgNavy, padding: "0 16px", display: "flex", alignItems: "center", height: 54, position: "sticky", top: 0, zIndex: 50, gap: 12 }}>
         <button onClick={() => navigate("/admin")}
           style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 13 }}>
@@ -78,7 +75,6 @@ export default function AdminReportes() {
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px" }}>
 
-        {/* Hero */}
         <div style={{ marginBottom: 28, textAlign: "center" }}>
           <h2 style={{ fontFamily: "'Montserrat',sans-serif", fontWeight: 800, color: C.text, fontSize: "clamp(20px,3vw,26px)", marginBottom: 6 }}>
             Centro de Reportes
@@ -86,7 +82,6 @@ export default function AdminReportes() {
           <p style={{ color: C.muted, fontSize: 14 }}>Descarga los registros del parqueadero en los formatos que necesites</p>
         </div>
 
-        {/* Filtro de fechas */}
         <div style={{ background: C.bgWhite, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginBottom: 24, boxShadow: "0 2px 8px rgba(13,27,53,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <div style={{ width: 36, height: 36, background: C.accentLight, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#7a5800", fontWeight: 800, fontFamily: "'Montserrat',sans-serif" }}>FIL</div>
@@ -117,7 +112,6 @@ export default function AdminReportes() {
           )}
         </div>
 
-        {/* Cards de reportes */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: 20, marginBottom: 24 }}>
           <ReporteCard
             icon="🚗"
@@ -138,7 +132,6 @@ export default function AdminReportes() {
           />
         </div>
 
-        {/* Info formatos */}
         <div style={{ background: C.bgWhite, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, boxShadow: "0 2px 8px rgba(13,27,53,0.05)" }}>
           <h3 style={{ margin: "0 0 16px", color: C.text, fontSize: 14, fontFamily: "'Montserrat',sans-serif", fontWeight: 700 }}>Sobre los formatos</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, fontSize: 13 }}>

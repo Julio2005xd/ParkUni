@@ -1,4 +1,3 @@
-// src/pages/admin/AdminLogin.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../../services/api";
@@ -40,7 +39,6 @@ export default function AdminLogin() {
   return (
     <div style={bg}>
       <div style={a.card}>
-        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
           <img src={logo} alt="ParqUni" style={{ width: 44, height: 44, objectFit: "contain", borderRadius: 10 }} />
           <div>
@@ -73,7 +71,6 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        {/* Hint credenciales */}
         <div style={{ marginTop: 20, background: "#fff9e7", border: "1px solid #f0d080", borderRadius: 8, padding: "10px 14px" }}>
           <div style={{ fontSize: 11, color: "#7a5800", fontWeight: 700, marginBottom: 4 }}>
             Credenciales por defecto

@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx — Contexto de autenticación JWT
 import { createContext, useContext, useState, useCallback } from "react";
 
 const AuthContext = createContext(null);

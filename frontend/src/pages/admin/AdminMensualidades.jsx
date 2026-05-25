@@ -22,7 +22,6 @@ function vehiculoBadge(tipo) {
     : { background: C.primaryLight, color: C.primary, border: `1px solid ${C.primary}`, display: "inline-block", padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700 };
 }
 
-/** Descarga el QR base64 como PNG */
 function descargarQR(imagenB64, nombre) {
   const a = document.createElement("a");
   a.href = `data:image/png;base64,${imagenB64}`;
@@ -116,7 +115,6 @@ export default function AdminMensualidades() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Poppins', sans-serif" }}>
-      {/* Navbar */}
       <div style={{ background: C.bgNavy, padding: "0 16px", display: "flex", justifyContent: "space-between", alignItems: "center", height: 54, position: "sticky", top: 0, zIndex: 50, flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={() => navigate("/admin")}
@@ -142,7 +140,6 @@ export default function AdminMensualidades() {
           </div>
         )}
 
-        {/* Formulario */}
         {showForm && (
           <form onSubmit={crearMensualidad} style={{ background: C.bgWhite, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, marginBottom: 20, boxShadow: "0 2px 12px rgba(13,27,53,0.07)" }}>
             <h3 style={{ margin: "0 0 18px", color: C.text, fontFamily: "'Montserrat',sans-serif", fontWeight: 700 }}>Nueva Mensualidad</h3>
@@ -196,7 +193,6 @@ export default function AdminMensualidades() {
           </form>
         )}
 
-        {/* Modal QR */}
         {qrModal && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
             <div style={{ background: C.bgWhite, borderRadius: 16, padding: 32, maxWidth: 380, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(13,27,53,0.2)" }}>
@@ -227,7 +223,6 @@ export default function AdminMensualidades() {
           </div>
         )}
 
-        {/* Info de tarifas */}
         <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
           <div style={{ background: C.bgWhite, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 16px", fontSize: 12, color: C.muted, flex: "0 0 auto" }}>
             <strong style={{ color: C.text }}>Mensualidades</strong> — Los usuarios con mensualidad activa entran y salen sin cobro por tiempo. Solo se registran los accesos.
@@ -237,7 +232,6 @@ export default function AdminMensualidades() {
           </div>
         </div>
 
-        {/* Tabla mensualidades */}
         <div style={{ background: C.bgWhite, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, boxShadow: "0 2px 12px rgba(13,27,53,0.06)" }}>
           <h3 style={{ margin: "0 0 16px", color: C.text, fontFamily: "'Montserrat',sans-serif", fontWeight: 700 }}>Mensualidades registradas</h3>
           {mens.length === 0 ? (

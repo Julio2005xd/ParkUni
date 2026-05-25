@@ -1,4 +1,3 @@
-// src/pages/user/UserRegister.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../../services/api";
@@ -32,7 +31,6 @@ export default function UserRegister() {
   return (
     <div style={a.bg}>
       <div style={{ ...a.card, maxWidth: 500 }}>
-        {/* Logo */}
         <div style={brand}>
           <img src={logo} alt="ParqUni" style={brandImg} />
           <div>

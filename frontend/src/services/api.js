@@ -1,8 +1,3 @@
-// src/services/api.js — Capa de acceso a la API FastAPI v2
-
-// Con VITE_API_URL vacío (proxy Vite), todas las llamadas son relativas al origen
-// → https://192.168.2.7:3000/auth/login  → Vite proxy → http://backend:8000/auth/login
-// Así la cámara funciona en HTTP desde cualquier dispositivo en la red.
 const BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
 function getToken() {
@@ -36,7 +31,6 @@ async function requestFile(path, options = {}) {
   return res;
 }
 
-// ─── Auth ────────────────────────────────────────────────────────
 export const auth = {
   login:     (correo, password) =>
     request("/auth/login", { method: "POST", body: JSON.stringify({ correo, password }) }),
@@ -47,7 +41,6 @@ export const auth = {
   me: () => request("/auth/me"),
 };
 
-// ─── Mi Cuenta (usuario autenticado) ─────────────────────────────
 export const cuenta = {
   perfil:           () => request("/cuenta/perfil"),
   actualizarPerfil: (datos) => request("/cuenta/perfil", { method: "PUT", body: JSON.stringify(datos) }),
@@ -76,7 +69,6 @@ export const cuenta = {
   },
 };
 
-// ─── Sesiones (público) ───────────────────────────────────────────
 export const sesiones = {
   validarQR:     (codigo) =>
     request("/sesiones/validar-qr", { method: "POST", body: JSON.stringify({ codigo }) }),
@@ -89,18 +81,15 @@ export const sesiones = {
     request(`/sesiones/historial?skip=${skip}&limit=${limit}`),
 };
 
-// ─── Admin ───────────────────────────────────────────────────────
 export const admin = {
   dashboard: () => request("/admin/dashboard"),
 
-  // Cuentas
   listarCuentas: () => request("/admin/cuentas"),
   crearCuenta:   (datos) =>
     request("/admin/cuentas", { method: "POST", body: JSON.stringify(datos) }),
   toggleCuenta:  (id) =>
     request(`/admin/cuentas/${id}/toggle`, { method: "PUT" }),
 
-  // Mensualidades
   listarMensualidades: () => request("/admin/mensualidades"),
   crearMensualidad:    (datos) =>
     request("/admin/mensualidades", { method: "POST", body: JSON.stringify(datos) }),
@@ -113,7 +102,6 @@ export const admin = {
   eliminarMensualidad: (mensId) =>
     request(`/admin/mensualidades/${mensId}`, { method: "DELETE" }),
 
-  // Reportes descarga
   descargarReporteVisitas: async (formato = "excel", fi = null, ff = null) => {
     let url = `/admin/reportes/visitas?formato=${formato}`;
     if (fi) url += `&fecha_inicio=${fi}`;
@@ -135,14 +123,12 @@ export const admin = {
     a.click();
   },
 
-  // Email
   enviarAlerta: (cuenta_id, asunto, mensaje) =>
     request("/admin/email/alerta", {
       method: "POST",
       body: JSON.stringify({ cuenta_id, asunto, mensaje }),
     }),
 
-  // Facturas PDF
   descargarFacturaPdf: async (facturaId, numero) => {
     const res  = await requestFile(`/admin/facturas/${facturaId}/pdf`);
     const blob = await res.blob();
@@ -156,7 +142,6 @@ export const admin = {
     request(`/admin/facturas/${facturaId}/reenviar`, { method: "POST" }),
 };
 
-// ─── Legacy (compatibilidad) ──────────────────────────────────────
 export const reportes = {
   resumen:     () => request("/reportes/resumen"),
   ingresosDia: () => request("/reportes/ingresos-dia"),

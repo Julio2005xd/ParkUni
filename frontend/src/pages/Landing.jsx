@@ -1,10 +1,8 @@
-// src/pages/Landing.jsx — Página de inicio
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect } from "react";
 import logo from "../assets/logo.png";
 
-/* ── Inline SVG icons (no external dependency) ───────────────── */
 const UserIcon = () => (
   <svg width={24} height={24} viewBox="0 0 24 24" fill="none"
     stroke="#ffffff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
@@ -48,7 +46,6 @@ export default function Landing() {
 
   return (
     <div style={s.page}>
-      {/* Hero header */}
       <header style={s.header}>
         <div style={s.headerInner}>
           <div style={s.brand}>
@@ -61,7 +58,6 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
       <section style={s.hero}>
         <div style={s.heroContent}>
           <div style={s.heroBadge}>Sistema Inteligente v1.0</div>
@@ -77,7 +73,6 @@ export default function Landing() {
             de placas, facturación digital y reportes en tiempo real.
           </p>
 
-          {/* Cards de acceso */}
           <div style={s.cards}>
             <button
               style={{ ...s.card, ...s.cardUser }}
@@ -147,7 +142,6 @@ const s = {
     flexDirection: "column",
   },
 
-  /* Header */
   header: {
     background: "#0d1b35",
     padding: "0 24px",
@@ -190,7 +184,6 @@ const s = {
     borderRadius: 10,
   },
 
-  /* Hero */
   hero: {
     flex: 1,
     background: "#ffffff",
@@ -240,7 +233,6 @@ const s = {
     margin: "0 auto 44px",
   },
 
-  /* Access cards */
   cards: {
     display: "flex",
     flexDirection: "column",
@@ -294,7 +286,6 @@ const s = {
     lineHeight: 1.4,
   },
 
-  /* Footer */
   footer: {
     background: "#0d1b35",
     color: "rgba(255,255,255,.35)",
